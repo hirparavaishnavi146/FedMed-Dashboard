@@ -1,0 +1,10 @@
+# FedMed — development-only dependencies
+#
+# Install:  .venv\Scripts\python.exe -m pip install -r requirements-dev.txt
+#
+# The "-r requirements.txt" line means: dev tools sit on top of the runtime
+# dependencies, so requirements.txt stays the single source of truth for versions.
+
+-r requirements.txt
+
+pytest==9.1.1

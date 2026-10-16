@@ -1,0 +1,11 @@
+# Never upload these to Vercel.
+#
+# .env.local holds a local development API key and a 127.0.0.1 API URL. Vercel
+# uploads the directory it is given and does NOT respect .gitignore, so without
+# this file the key would be sent to a third party and baked into a public bundle.
+# The deployed build gets its configuration from the project's environment
+# variables instead.
+.env*
+node_modules
+dist
+coverage

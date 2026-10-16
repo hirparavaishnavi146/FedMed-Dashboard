@@ -1,0 +1,75 @@
+# Render Blueprint for the FedMed dashboard.
+#
+# ONE Docker service, ONE origin: the API serves the built frontend itself, so the
+# browser makes same-origin requests. There is no CORS origin to configure and no API
+# hostname to bake into the build -- the two things a two-host setup gets wrong.
+#
+# This file is only read when Render is explicitly pointed at this repository, and it
+# creates nothing on its own.
+#
+# Route: Render dashboard -> New + -> Blueprint -> pick this repository and the branch
+# `Vaishnavi` (this file exists only on that branch; `main` does not have it).
+#
+# A PRIVATE repository requires the Render GitHub App to be installed on it, and
+# installing a GitHub App needs repository ADMIN rights -- a collaborator cannot do it.
+# That is the one step an account owner has to perform.
+
+services:
+  - type: web
+    name: fedmed-dashboard
+    runtime: docker
+    # The Free instance type: 512 MB RAM, 0.1 CPU, spins down after 15 minutes idle and
+    # takes about a minute to wake. This app writes nothing durable, so the ephemeral
+    # filesystem is not a limitation for a demonstration. A paid instance type removes
+    # the spin-down.
+    #
+    # Docker, not the native Python runtime, because this app also needs a frontend
+    # BUILD step (Node) -- frontend/dist is git-ignored, so the repository holds no
+    # built pages -- and two SYSTEM packages pip cannot install: tesseract-ocr and
+    # poppler-utils, which are what make a scanned report readable instead of
+    # "unreadable". See deploy/render/Dockerfile.
+    plan: free
+    dockerfilePath: ./Dockerfile
+    # The repository root is the build context: the Dockerfile copies from both
+    # `backend/` and `frontend/`.
+    dockerContext: .
+    # Health checks hit this path; it must stay cheap and free of configuration detail.
+    healthCheckPath: /health
+    # Never deploy on push without a human deciding to. Deployment is a deliberate act.
+    autoDeploy: false
+    envVars:
+      # --- Optional: the AI-generated sections -------------------------------------
+      #
+      # Sections C (possible complications), E (clinical suggestions) and G (the
+      # narrative summary) need an OpenAI-compatible endpoint. Without these, those
+      # sections report themselves UNAVAILABLE with a reason -- they are never filled
+      # with plausible-looking placeholder text.
+      #
+      # BEFORE SETTING FEDMED_AI_API_KEY: this service accepts uploads from anyone, so
+      # a key here is spent by every visitor, and the text of each report is sent to
+      # that provider. Set it only if that is intended. Leaving all three blank during
+      # Blueprint creation is the correct answer if unsure.
+      - key: FEDMED_AI_BASE_URL
+        sync: false
+      - key: FEDMED_AI_API_KEY
+        sync: false
+      - key: FEDMED_AI_MODEL
+        sync: false
+
+# Not configured here, and why:
+#
+#   FEDMED_API_KEYS -- unset means the protected routes refuse with 503
+#     auth_not_configured rather than silently allowing anonymous access. The
+#     medical-report routes are opened separately by FEDMED_MEDICAL_REPORTS_PUBLIC_DEMO
+#     INSIDE the image (see deploy/render/Dockerfile), and dataset and training
+#     mutations stay refused with 401, so the public report workflow needs no key.
+#
+#   FEDMED_CORS_ORIGINS -- unnecessary with a single origin, which is the point of this
+#     Docker shape. It only matters if the frontend is hosted separately, which is the
+#     route this file used to describe: a runtime: python service with rootDir: backend
+#     and the pages served from another host. That shape cannot serve the pages itself
+#     (frontend/dist is git-ignored) and cannot install OCR. See docs/DEPLOYMENT.md if
+#     the two-host route is ever wanted instead.
+#
+#   TLS certificates -- Render terminates TLS at the edge. Do NOT set
+#     FEDMED_TLS_CERT_FILE / FEDMED_TLS_KEY_FILE on this host.

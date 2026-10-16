@@ -1,0 +1,78 @@
+# ============================================================
+# FedMed — Cross-Silo Federated Learning Engine
+# .gitignore  (keep generated, downloaded and private files out of Git)
+# ============================================================
+
+# ---------------- Secrets: never commit ----------------
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+
+# ---------------- Python ----------------
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.venv/
+venv/
+env/
+ENV/
+build/
+dist/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# ---------------- Node / React (Vite) ----------------
+node_modules/
+frontend/dist/
+frontend/dist-local/
+frontend/.vite/
+npm-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# ---------------- Medical data & model artifacts ----------------
+# Deliberately ignored: no patient data and no large binaries in Git, ever.
+# The leading "/" matters: a bare "data/" also matches any nested folder called
+# data (e.g. frontend/src/data/), which would exclude real source files.
+/data/
+*.nii
+*.nii.gz
+*.nrrd
+*.dcm
+*.dicom
+*.h5
+*.hdf5
+*.pth
+*.pt
+*.ckpt
+*.onnx
+*.log
+/logs/
+/runs/
+/outputs/
+
+# Imaging run outputs (Stage 4): experiment artifacts, checkpoints and the
+# generated NIfTI phantoms. All reproducible from the documented command
+# `python -m app.imaging.pipeline`, so none of it belongs in version control.
+experiments/
+
+# ---------------- OS / editor ----------------
+.DS_Store
+Thumbs.db
+desktop.ini
+.idea/
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+*.code-workspace
+
+# Generated folder dumps (tree /f output), which include .venv contents.
+*fedmed_structure*.txt

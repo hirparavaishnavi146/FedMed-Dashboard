@@ -1,0 +1,93 @@
+# Build the FedMed dashboard and publish it to GitHub Pages.
+#
+# This gives the project a public link that needs no separate hosting account:
+# it runs on the repository's own GitHub Pages.
+#
+# The published site is the FRONTEND ONLY, as static files. It has no backend,
+# so it runs in demo mode and renders labelled sample data rather than calling an
+# API. For a live backend, set the repository variable VITE_API_BASE_URL (Settings
+# -> Secrets and variables -> Actions -> Variables) to the deployed API origin and
+# set VITE_USE_DEMO_DATA to "false"; this workflow will pick both up.
+#
+# Training never runs here: it needs ~384 MB with torch loaded and a static host
+# runs no Python at all.
+#
+# One-time setup by a repository admin: Settings -> Pages -> Build and deployment
+# -> Source: GitHub Actions. Until that is set, this workflow's deploy step fails
+# with "Get Pages site failed"; the build itself still runs.
+
+name: Deploy dashboard to GitHub Pages
+
+on:
+  push:
+    branches: [Vaishnavi]
+    paths:
+      - 'frontend/**'
+      - '.github/workflows/deploy-pages.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Let a newer run cancel an in-flight one, but never abort a running deploy.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Type check
+        run: npx tsc --noEmit
+
+      - name: Build
+        env:
+          # A GitHub Pages project site is served from /<repo>/, so assets must be
+          # requested from there. vite.config.ts reads this into `base`.
+          VITE_BASE_PATH: /FedMed-Axlero-Internship/
+          # Demo mode unless the repository variable says otherwise. An empty
+          # VITE_API_BASE_URL with demo mode off would fail the build on purpose
+          # (see vite.config.ts), so this stays consistent by construction.
+          VITE_USE_DEMO_DATA: ${{ vars.VITE_USE_DEMO_DATA || 'true' }}
+          VITE_API_BASE_URL: ${{ vars.VITE_API_BASE_URL }}
+        run: npm run build
+
+      - name: Add the SPA deep-link fallback
+        run: node scripts/spa-fallback.mjs
+
+      - name: Stop GitHub Pages from running Jekyll
+        # Jekyll ignores paths beginning with an underscore, which would silently
+        # drop built asset files.
+        run: touch dist/.nojekyll
+
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: frontend/dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

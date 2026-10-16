@@ -1,0 +1,57 @@
+# FedMed — runtime dependencies (single source of truth)
+#
+# Every version below was resolved and verified for Python 3.14 on Windows x64:
+#   uv pip compile --python-version 3.14 --python-platform windows
+#   -> 70 packages, 0 conflicts
+#
+# Install from the project root (Command Prompt):
+#   .venv\Scripts\python.exe -m pip install -r requirements.txt
+# or much faster:
+#   uv pip install --python .venv\Scripts\python.exe -r requirements.txt
+#
+# WARNING: never run a bare `pip install` on this machine — bare `pip` points at
+# Hermes's own virtual environment (Python 3.11), not at this project.
+
+# --- Web API -----------------------------------------------------------------
+fastapi==0.138.2
+uvicorn[standard]==0.49.0
+pydantic==2.14.0
+pydantic-settings==2.15.0
+python-dotenv==1.2.4
+python-multipart==0.0.32
+
+# --- Scientific / medical imaging -------------------------------------------
+# USED by app/imaging: nibabel reads and writes the NIfTI volumes that MONAI's
+# LoadImaged/Spacingd operate on; scipy is MONAI's resampling backend. Both were
+# installed and verified against the code in app/imaging.
+numpy==2.5.3
+scipy==1.18.1
+pillow==12.3.0
+nibabel==5.4.2
+
+# --- Deep learning -----------------------------------------------------------
+# CPU-only: this machine has no NVIDIA GPU (Intel HD 630, integrated, 7.9 GB RAM),
+# so torch resolves to the +cpu wheel and the models are sized to suit it.
+torch==2.14.1
+
+# USED by app/imaging (Stage 4): the 3D U-Net, and the preprocessing pipeline
+# (LoadImaged / Orientationd / Spacingd / NormalizeIntensityd / ResizeWithPadOrCropd).
+# API verified against the installed 1.6.1 rather than assumed.
+monai==1.6.1
+
+# --- Federated learning ------------------------------------------------------
+# Server/client orchestration and gRPC transport. Installed and verified against
+# the APIs used in app/federated/flower_app.py.
+# NOTE: flwr pins starlette to 1.3.1, downgrading the 1.7.0 that fastapi 0.138
+# would otherwise take. fastapi works with it (verified), but running
+# `pip install -r requirements.txt` may report the change.
+flwr==1.39.0
+
+# --- Privacy (homomorphic encryption) ----------------------------------------
+# NOT USED YET. Declared so the dependency is pinned when milestone M5 arrives;
+# no code imports it, and no privacy mechanism is implemented or claimed.
+tenseal==0.3.18
+
+# --- HTTP client (FL clients, API tests) -------------------------------------
+httpx==0.28.1
+
