@@ -29,7 +29,7 @@ services:
     # poppler-utils, which are what make a scanned report readable instead of
     # "unreadable". See deploy/render/Dockerfile.
     plan: free
-    dockerfilePath: ./Dockerfile
+    dockerfilePath: ./deploy/render/Dockerfile
     # The repository root is the build context: the Dockerfile copies from both
     # `backend/` and `frontend/`.
     dockerContext: .

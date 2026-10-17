@@ -32,6 +32,9 @@ htmlcov/
 # ---------------- Node / React (Vite) ----------------
 node_modules/
 frontend/dist/
+# COMMITTED on purpose: the deploy image copies this bundle so the container
+# build needs no Node (a Render Free instance has 512 MB, and a Vite build on top
+# of that gets OOM-killed). Built with VITE_API_SAME_ORIGIN=true.
 frontend/dist-local/
 frontend/.vite/
 npm-debug.log*
@@ -76,3 +79,6 @@ desktop.ini
 
 # Generated folder dumps (tree /f output), which include .venv contents.
 *fedmed_structure*.txt
+
+!frontend/dist/
+!frontend/dist/**
